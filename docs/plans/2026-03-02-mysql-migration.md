@@ -71,29 +71,55 @@ git commit -m "chore: baseline commit before MySQL migration"
 
 **Files:**
 - System: MySQL server configuration
+- Existing: `docker-compose.yml`
 
-**Step 1: Create database and user**
-
-If you're using local MySQL, create the database and user:
+**Step 1: Start MySQL using Docker Compose**
 
 ```bash
-mysql -u root -e "CREATE DATABASE shopify_app_dev;"
-mysql -u root -e "CREATE USER 'shopify_app'@'localhost' IDENTIFIED BY 'apppassword';"
-mysql -u root -e "GRANT ALL PRIVILEGES ON shopify_app_dev.* TO 'shopify_app'@'localhost';"
-mysql -u root -e "FLUSH PRIVILEGES;"
+docker-compose up -d db
 ```
 
-**Note:** Adjust the MySQL root username and password as needed. If you're using a remote MySQL instance, create the database and user on your server.
+Expected: Container started, MySQL accessible on port 3306
 
-**Step 2: Verify connection**
+**Step 2: Verify MySQL is running**
 
 ```bash
-mysql -ushopify_app -papppassword -e "SELECT 1"
+docker-compose ps
+```
+
+Expected: `db` service status is "Up"
+
+**Step 3: Create database (if needed)**
+
+Check if database `docker` already exists (configured in docker-compose.yml):
+```bash
+docker exec -it $(docker-compose ps -q db) mysql -udocker -pdocker -e "SHOW DATABASES;"
+```
+
+If you need to create a separate database for the app:
+```bash
+docker exec -it $(docker-compose ps -q db) mysql -uroot -proot -e "CREATE DATABASE shopify_app_dev;"
+docker exec -it $(docker-compose ps -q db) mysql -uroot -proot -e "CREATE USER 'shopify_app'@'%' IDENTIFIED BY 'apppassword';"
+docker exec -it $(docker-compose ps -q db) mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON shopify_app_dev.* TO 'shopify_app'@'%';"
+docker exec -it $(docker-compose ps -q db) mysql -uroot -proot -e "FLUSH PRIVILEGES;"
+```
+
+**Step 4: Test connection**
+
+```bash
+docker exec -it $(docker-compose ps -q db) mysql -udocker -pdocker -e "SELECT 1"
 ```
 
 Expected: Output shows `+---+ | 1 | +---+`
 
-**Note:** If you're using a remote MySQL instance or cloud database (AWS RDS, Google Cloud SQL, etc.), note your connection details (host, port, user, password) for Task 3.
+**Note:** Your docker-compose.yml uses:
+- Database: `docker`
+- User: `docker`
+- Password: `docker`
+- Root password: `root`
+- Port: `3306`
+
+You can use these credentials or create a new database as shown above.
 
 ---
 
@@ -109,24 +135,35 @@ Create file `.env.example`:
 
 ```bash
 # Prisma Database Configuration
-# For local development:
-DATABASE_URL="mysql://shopify_app:apppassword@localhost:3306/shopify_app_dev"
+# For local development with Docker Compose:
+DATABASE_URL="mysql://docker:docker@localhost:3306/docker"
 
 # For production (managed cloud database):
 # DATABASE_URL="mysql://username:password@host:3306/database_name"
 
 # Alternative: Separate connection parameters
-# DATABASE_USER="shopify_app"
-# DATABASE_PASSWORD="apppassword"
+# DATABASE_USER="docker"
+# DATABASE_PASSWORD="docker"
 # DATABASE_HOST="localhost"
 # DATABASE_PORT=3306
-# DATABASE_NAME="shopify_app_dev"
+# DATABASE_NAME="docker"
 ```
 
 **Step 2: Create .env for local development**
 
 Create file `.env`:
 
+```bash
+DATABASE_URL="mysql://docker:docker@localhost:3306/docker"
+```
+
+**Note:** This uses the credentials from your existing `docker-compose.yml`:
+- Database: `docker`
+- User: `docker`
+- Password: `docker`
+- Port: `3306`
+
+If you created a separate database in Task 2, update accordingly:
 ```bash
 DATABASE_URL="mysql://shopify_app:apppassword@localhost:3306/shopify_app_dev"
 ```
@@ -354,13 +391,19 @@ To switch databases:
 
 **Local Development:**
 ```bash
-# Create database (if not exists)
-mysql -u root -e "CREATE DATABASE shopify_app_dev;"
+# Start MySQL with Docker Compose
+docker-compose up -d db
+
+# Database credentials from docker-compose.yml:
+# - Database: docker
+# - User: docker
+# - Password: docker
+# - Port: 3306
 ```
 
 **Environment Variables:**
 ```bash
-DATABASE_URL="mysql://user:password@host:3306/database_name"
+DATABASE_URL="mysql://docker:docker@localhost:3306/docker"
 ```
 
 **To switch databases:**
@@ -379,7 +422,7 @@ If `README.md` exists, add section:
 ### Prerequisites
 
 - Node.js >= 20.19
-- MySQL 8.0+
+- Docker and Docker Compose
 
 ### Setup
 
@@ -388,9 +431,9 @@ If `README.md` exists, add section:
    npm install
    ```
 
-2. Create database:
+2. Start MySQL database:
    ```bash
-   mysql -u root -e "CREATE DATABASE shopify_app_dev;"
+   docker-compose up -d db
    ```
 
 3. Setup database schema:
@@ -627,8 +670,8 @@ Expected: No TypeScript errors
 
 1. Start fresh database:
    ```bash
-   mysql -e "DROP DATABASE IF EXISTS shopify_app_dev;"
-   mysql -e "CREATE DATABASE shopify_app_dev;"
+   docker-compose down -v db
+   docker-compose up -d db
    npm run setup
    ```
 
@@ -677,26 +720,19 @@ git tag -a v1.0.0-mysql-migration -m "Migrate from SQLite to MySQL
 
 If you need to rollback to SQLite at any point:
 
-### Step 1: Clean MySQL database (optional)
+### Step 1: Stop MySQL container (optional)
 
-If you want to remove MySQL data:
+If you want to stop the Docker MySQL container:
 ```bash
-mysql -e "DROP DATABASE IF EXISTS shopify_app_dev;"
+docker-compose down db
+```
+
+To remove MySQL data volume:
+```bash
+docker-compose down -v db
 ```
 
 ### Step 2: Revert Prisma schema
-
-```bash
-git checkout main~1 prisma/schema.prisma
-```
-
-Or manually edit:
-```prisma
-datasource db {
-  provider = "sqlite"
-  url      = "file:dev.sqlite"
-}
-```
 
 ### Step 3: Revert .env file
 
@@ -726,11 +762,19 @@ npm run dev
 
 **Solution:**
 1. Check DATABASE_URL in `.env`
-2. Verify MySQL is accessible:
+2. Verify Docker Compose MySQL is running:
    ```bash
-   mysql -h localhost -u shopify_app -papppassword -e "SELECT 1"
+   docker-compose ps
    ```
-3. Check firewall and network settings if using remote MySQL
+3. Start MySQL if not running:
+   ```bash
+   docker-compose up -d db
+   ```
+4. Test connection:
+   ```bash
+   docker exec -it $(docker-compose ps -q db) mysql -udocker -pdocker -e "SELECT 1"
+   ```
+5. Check if port 3306 is in use
 
 ### Issue: "Authentication plugin 'caching_sha2_password' cannot be loaded"
 
@@ -780,8 +824,10 @@ Migration is complete when:
 
 ### Development
 - [ ] `.env.example` documents required environment variables
+- [ ] `.env.example` includes Docker Compose instructions
 - [ ] CLAUDE.md updated with MySQL instructions
 - [ ] README.md includes MySQL setup steps
+- [ ] Team members can run `docker-compose up -d db` to start MySQL
 
 ### Production
 - [ ] MySQL database created on cloud provider
