@@ -214,12 +214,30 @@ Key environment variables (managed by Shopify CLI):
 
 ## Database
 
-Default: SQLite via Prisma (`file:dev.sqlite`)
+**Default:** MySQL via Prisma
 
-To switch databases:
+**Connection:** Configure via `DATABASE_URL` in `.env`
 
-1. Update `datasource db` in `prisma/schema.prisma`
-2. Update `DATABASE_URL` environment variable
+**Local Development:**
+```bash
+# Start MySQL with Docker Compose
+docker-compose up -d db
+
+# Database credentials from docker-compose.yml:
+# - Database: docker
+# - User: docker
+# - Password: docker
+# - Port: 3306
+```
+
+**Environment Variables:**
+```bash
+DATABASE_URL="mysql://docker:docker@localhost:3306/docker"
+```
+
+**To switch databases:**
+1. Update `datasource db` provider in `prisma/schema.prisma`
+2. Update `DATABASE_URL` in `.env`
 3. Run `npm run setup`
 
 ## TypeScript Configuration

@@ -78,10 +78,38 @@ For more information on the Shopify Dev MCP please read [the documentation](http
 
 ### Application Storage
 
-This template uses [Prisma](https://www.prisma.io/) to store session data, by default using an [SQLite](https://www.sqlite.org/index.html) database.
+This template uses [Prisma](https://www.prisma.io/) to store session data, using **MySQL** as the database.
 The database is defined as a Prisma schema in `prisma/schema.prisma`.
 
-This use of SQLite works in production if your app runs as a single instance.
+#### Local Development Setup
+
+To start the application locally, you'll need Docker and Docker Compose installed.
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Start MySQL database:**
+   ```bash
+   docker-compose up -d db
+   ```
+
+   This starts a MySQL container with the following credentials (configured in `docker-compose.yml`):
+   - Database: `docker`
+   - User: `docker`
+   - Password: `docker`
+   - Port: `3306`
+
+3. **Setup database schema:**
+   ```bash
+   npm run setup
+   ```
+
+4. **Start development server:**
+   ```bash
+   npm run dev
+   ```
 The database that works best for you depends on the data your app needs and how it is queried.
 Here’s a short list of databases providers that provide a free tier to get started:
 
