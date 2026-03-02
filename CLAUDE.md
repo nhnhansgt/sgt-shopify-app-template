@@ -22,6 +22,12 @@ shopify app dev
 npm run build
 ```
 
+### Production Server
+
+```bash
+npm run start            # Start production server (requires build first)
+```
+
 ### Database Setup
 
 ```bash
@@ -29,10 +35,11 @@ npm run setup
 # Runs: prisma generate && prisma migrate deploy
 ```
 
-### Linting
+### Code Formatting
 
 ```bash
-npm run lint
+npm run format            # Format code with Prettier
+npm run format:check      # Check formatting without modifying
 ```
 
 ### Type Checking
@@ -62,6 +69,22 @@ npm run env               # Manage environment variables
 npm run config:link       # Link to existing app config
 npm run config:use        # Switch app configurations
 ```
+
+### Docker
+
+```bash
+npm run docker-start      # Start app in Docker container
+```
+
+### GraphQL Code Generation
+
+```bash
+npm run graphql-codegen   # Generate TypeScript types from GraphQL schema
+```
+
+## Environment Setup
+
+**Node.js version:** >=20.19 <22 || >=22.12 (See `package.json` engines)
 
 ## Architecture
 
@@ -127,11 +150,16 @@ Uses Prisma with `@shopify/shopify-app-session-storage-prisma`. Session data is 
 
 ## Shopify Dev MCP Integration
 
-This project includes the Shopify Dev MCP server configuration in `.mcp.json`. It provides:
+This project includes MCP server configurations in `.mcp.json`:
 
+### Shopify Dev MCP
 - GraphQL schema introspection
 - Documentation search from shopify.dev
 - Component validation for Polaris components
+
+### Prisma MCP
+- Prisma Studio integration
+- Database migrations and schema management
 
 ## Important Patterns
 
@@ -213,3 +241,7 @@ Special rules:
 
 - `shopify` global allowed
 - `variant` prop allowed for Polaris components
+
+## Docker Support
+
+The project includes a `Dockerfile` for containerized deployment. Use `npm run docker-start` to run the app in a Docker container.
