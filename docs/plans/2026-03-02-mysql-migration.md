@@ -13,9 +13,9 @@
 ## Prerequisites
 
 Before starting this implementation plan, ensure you have:
-- MySQL 8.0+ installed and running locally OR access to remote MySQL instance
-- MySQL client tools available
-- Access to create databases and users
+- MySQL 8.0+ available (local or remote instance)
+- Access to create databases and users on MySQL server
+- MySQL client tools available (for testing)
 - Project dependencies installed: `npm install`
 
 ---
@@ -67,46 +67,25 @@ git commit -m "chore: baseline commit before MySQL migration"
 
 ---
 
-## Task 2: Setup MySQL Database (Local Development)
+## Task 2: Setup MySQL Database
 
 **Files:**
 - System: MySQL server configuration
 
-**Step 1: Verify MySQL installation**
+**Step 1: Create database and user**
 
-Check if MySQL is installed:
-```bash
-mysql --version
-```
-
-Expected: Output shows MySQL 8.0+ or MariaDB 10.5+
-
-If not installed, install MySQL:
-
-Ubuntu/Debian:
-```bash
-sudo apt update
-sudo apt install mysql-server -y
-sudo systemctl start mysql
-sudo systemctl enable mysql
-```
-
-macOS:
-```bash
-brew install mysql
-brew services start mysql
-```
-
-**Step 2: Create database and user**
+If you're using local MySQL, create the database and user:
 
 ```bash
-sudo mysql -e "CREATE DATABASE shopify_app_dev;"
-sudo mysql -e "CREATE USER 'shopify_app'@'localhost' IDENTIFIED BY 'apppassword';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON shopify_app_dev.* TO 'shopify_app'@'localhost';"
-sudo mysql -e "FLUSH PRIVILEGES;"
+mysql -u root -e "CREATE DATABASE shopify_app_dev;"
+mysql -u root -e "CREATE USER 'shopify_app'@'localhost' IDENTIFIED BY 'apppassword';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON shopify_app_dev.* TO 'shopify_app'@'localhost';"
+mysql -u root -e "FLUSH PRIVILEGES;"
 ```
 
-**Step 3: Verify connection**
+**Note:** Adjust the MySQL root username and password as needed. If you're using a remote MySQL instance, create the database and user on your server.
+
+**Step 2: Verify connection**
 
 ```bash
 mysql -ushopify_app -papppassword -e "SELECT 1"
@@ -114,7 +93,7 @@ mysql -ushopify_app -papppassword -e "SELECT 1"
 
 Expected: Output shows `+---+ | 1 | +---+`
 
-**Note:** If you're using a remote MySQL instance or cloud database, skip this step and use your connection details in Task 3.
+**Note:** If you're using a remote MySQL instance or cloud database (AWS RDS, Google Cloud SQL, etc.), note your connection details (host, port, user, password) for Task 3.
 
 ---
 
@@ -375,12 +354,8 @@ To switch databases:
 
 **Local Development:**
 ```bash
-# Ensure MySQL is running
-sudo systemctl start mysql  # Linux
-brew services start mysql   # macOS
-
-# Create database
-mysql -e "CREATE DATABASE shopify_app_dev;"
+# Create database (if not exists)
+mysql -u root -e "CREATE DATABASE shopify_app_dev;"
 ```
 
 **Environment Variables:**
@@ -413,11 +388,9 @@ If `README.md` exists, add section:
    npm install
    ```
 
-2. Ensure MySQL is running and create database:
+2. Create database:
    ```bash
-   sudo systemctl start mysql  # Linux
-   brew services start mysql   # macOS
-   mysql -e "CREATE DATABASE shopify_app_dev;"
+   mysql -u root -e "CREATE DATABASE shopify_app_dev;"
    ```
 
 3. Setup database schema:
@@ -752,16 +725,12 @@ npm run dev
 ### Issue: "Can't reach database server"
 
 **Solution:**
-1. Verify MySQL is running:
+1. Check DATABASE_URL in `.env`
+2. Verify MySQL is accessible:
    ```bash
-   sudo systemctl status mysql  # Linux
-   brew services list | grep mysql  # macOS
+   mysql -h localhost -u shopify_app -papppassword -e "SELECT 1"
    ```
-2. Check DATABASE_URL in `.env`
-3. Test connection manually:
-   ```bash
-   mysql -h localhost -u shopify_app -papppassword shopify_app_dev
-   ```
+3. Check firewall and network settings if using remote MySQL
 
 ### Issue: "Authentication plugin 'caching_sha2_password' cannot be loaded"
 
@@ -810,7 +779,6 @@ Migration is complete when:
 ## Post-Migration Checklist
 
 ### Development
-- [ ] Team members can start MySQL locally (systemctl or brew services)
 - [ ] `.env.example` documents required environment variables
 - [ ] CLAUDE.md updated with MySQL instructions
 - [ ] README.md includes MySQL setup steps
