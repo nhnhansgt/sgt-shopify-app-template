@@ -13,7 +13,7 @@
 ## Prerequisites
 
 Before starting this implementation plan, ensure you have:
-- MySQL 8.0+ installed locally OR Docker installed
+- MySQL 8.0+ installed and running locally OR access to remote MySQL instance
 - MySQL client tools available
 - Access to create databases and users
 - Project dependencies installed: `npm install`
@@ -70,69 +70,18 @@ git commit -m "chore: baseline commit before MySQL migration"
 ## Task 2: Setup MySQL Database (Local Development)
 
 **Files:**
-- Create: `docker-compose.yml` (optional, for local MySQL)
-- Create: `.env.example`
+- System: MySQL server configuration
 
-**Step 1: Choose local MySQL setup option**
+**Step 1: Verify MySQL installation**
 
-Choose **Option A** (Docker - recommended) OR **Option B** (native MySQL)
-
-### Option A: Docker MySQL (Recommended)
-
-**Step 1A.1: Create docker-compose.yml**
-
-Create file `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  mysql:
-    image: mysql:8.0
-    container_name: shopify-app-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: shopify_app_dev
-      MYSQL_USER: shopify_app
-      MYSQL_PASSWORD: apppassword
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
-
-volumes:
-  mysql_data:
-```
-
-**Step 1A.2: Start MySQL container**
-
+Check if MySQL is installed:
 ```bash
-docker-compose up -d
+mysql --version
 ```
 
-Expected output: Container started, name "shopify-app-mysql"
+Expected: Output shows MySQL 8.0+ or MariaDB 10.5+
 
-**Step 1A.3: Verify MySQL is running**
-
-```bash
-docker-compose ps
-```
-
-Expected: Status "Up"
-
-**Step 1A.4: Test database connection**
-
-```bash
-docker exec -it shopify-app-mysql mysql -ushopify_app -papppassword -e "SELECT 1"
-```
-
-Expected: Output shows `+---+ | 1 | +---+`
-
-### Option B: Native MySQL Installation
-
-**Step 1B.1: Install MySQL**
+If not installed, install MySQL:
 
 Ubuntu/Debian:
 ```bash
@@ -148,7 +97,7 @@ brew install mysql
 brew services start mysql
 ```
 
-**Step 1B.2: Create database and user**
+**Step 2: Create database and user**
 
 ```bash
 sudo mysql -e "CREATE DATABASE shopify_app_dev;"
@@ -157,13 +106,15 @@ sudo mysql -e "GRANT ALL PRIVILEGES ON shopify_app_dev.* TO 'shopify_app'@'local
 sudo mysql -e "FLUSH PRIVILEGES;"
 ```
 
-**Step 1B.3: Verify connection**
+**Step 3: Verify connection**
 
 ```bash
 mysql -ushopify_app -papppassword -e "SELECT 1"
 ```
 
 Expected: Output shows `+---+ | 1 | +---+`
+
+**Note:** If you're using a remote MySQL instance or cloud database, skip this step and use your connection details in Task 3.
 
 ---
 
@@ -179,7 +130,7 @@ Create file `.env.example`:
 
 ```bash
 # Prisma Database Configuration
-# For local development with Docker MySQL:
+# For local development:
 DATABASE_URL="mysql://shopify_app:apppassword@localhost:3306/shopify_app_dev"
 
 # For production (managed cloud database):
@@ -217,8 +168,8 @@ echo ".env.*.local" >> .gitignore
 **Step 4: Commit environment configuration**
 
 ```bash
-git add .env.example .gitignore docker-compose.yml
-git commit -m "chore: add MySQL environment configuration and Docker setup"
+git add .env.example .gitignore
+git commit -m "chore: add MySQL environment configuration"
 ```
 
 ---
@@ -424,10 +375,11 @@ To switch databases:
 
 **Local Development:**
 ```bash
-# Start MySQL with Docker
-docker-compose up -d
+# Ensure MySQL is running
+sudo systemctl start mysql  # Linux
+brew services start mysql   # macOS
 
-# Or use native MySQL
+# Create database
 mysql -e "CREATE DATABASE shopify_app_dev;"
 ```
 
@@ -452,7 +404,7 @@ If `README.md` exists, add section:
 ### Prerequisites
 
 - Node.js >= 20.19
-- MySQL 8.0+ OR Docker
+- MySQL 8.0+
 
 ### Setup
 
@@ -461,9 +413,11 @@ If `README.md` exists, add section:
    npm install
    ```
 
-2. Start MySQL database:
+2. Ensure MySQL is running and create database:
    ```bash
-   docker-compose up -d
+   sudo systemctl start mysql  # Linux
+   brew services start mysql   # macOS
+   mysql -e "CREATE DATABASE shopify_app_dev;"
    ```
 
 3. Setup database schema:
@@ -700,8 +654,8 @@ Expected: No TypeScript errors
 
 1. Start fresh database:
    ```bash
-   docker-compose down -v
-   docker-compose up -d
+   mysql -e "DROP DATABASE IF EXISTS shopify_app_dev;"
+   mysql -e "CREATE DATABASE shopify_app_dev;"
    npm run setup
    ```
 
@@ -737,7 +691,6 @@ git commit -m "test: complete verification of MySQL migration"
 git tag -a v1.0.0-mysql-migration -m "Migrate from SQLite to MySQL
 
 - Switch Prisma datasource to MySQL
-- Add Docker Compose for local MySQL
 - Update environment configuration
 - Create initial migration
 - Update documentation
@@ -751,10 +704,11 @@ git tag -a v1.0.0-mysql-migration -m "Migrate from SQLite to MySQL
 
 If you need to rollback to SQLite at any point:
 
-### Step 1: Stop MySQL and start fresh
+### Step 1: Clean MySQL database (optional)
 
+If you want to remove MySQL data:
 ```bash
-docker-compose down -v
+mysql -e "DROP DATABASE IF EXISTS shopify_app_dev;"
 ```
 
 ### Step 2: Revert Prisma schema
@@ -798,7 +752,11 @@ npm run dev
 ### Issue: "Can't reach database server"
 
 **Solution:**
-1. Verify MySQL is running: `docker-compose ps`
+1. Verify MySQL is running:
+   ```bash
+   sudo systemctl status mysql  # Linux
+   brew services list | grep mysql  # macOS
+   ```
 2. Check DATABASE_URL in `.env`
 3. Test connection manually:
    ```bash
@@ -808,9 +766,10 @@ npm run dev
 ### Issue: "Authentication plugin 'caching_sha2_password' cannot be loaded"
 
 **Solution:**
-This is fixed in the docker-compose.yml with:
-```yaml
-command: --default-authentication-plugin=mysql_native_password
+Update MySQL user to use native password authentication:
+```bash
+mysql -e "ALTER USER 'shopify_app'@'localhost' IDENTIFIED WITH mysql_native_password BY 'apppassword';"
+mysql -e "FLUSH PRIVILEGES;"
 ```
 
 ### Issue: "Table doesn't exist"
@@ -851,7 +810,7 @@ Migration is complete when:
 ## Post-Migration Checklist
 
 ### Development
-- [ ] Team members can run `docker-compose up -d` to start MySQL
+- [ ] Team members can start MySQL locally (systemctl or brew services)
 - [ ] `.env.example` documents required environment variables
 - [ ] CLAUDE.md updated with MySQL instructions
 - [ ] README.md includes MySQL setup steps
