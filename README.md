@@ -1,264 +1,220 @@
-# Shopify App Template - React Router
+# Shopify App Template (React Router)
 
-This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using [React Router](https://reactrouter.com/). It was forked from the [Shopify Remix app template](https://github.com/Shopify/shopify-app-template-remix) and converted to React Router.
+A modern Shopify app template built with React Router, featuring Polaris web components for UI, Prisma for session storage, and seamless integration with the Shopify Admin GraphQL API.
 
-Rather than cloning this repo, follow the [Quick Start steps](https://github.com/Shopify/shopify-app-template-react-router#quick-start).
+## 🚀 Features
 
-Visit the [`shopify.dev` documentation](https://shopify.dev/docs/api/shopify-app-react-router) for more details on the React Router app package.
+- **React Router v7** - File-based routing with flat route structure
+- **Polaris Web Components** - Beautiful, accessible UI components
+- **Prisma ORM** - Type-safe database access with session management
+- **Shopify Admin API** - Full GraphQL support for data operations
+- **TypeScript** - End-to-end type safety
+- **Docker Support** - Containerized deployment ready
+- **MySQL Database** - Production-ready session storage
 
-## Upgrading from Remix
+## 📋 Prerequisites
 
-If you have an existing Remix app that you want to upgrade to React Router, please follow the [upgrade guide](https://github.com/Shopify/shopify-app-template-react-router/wiki/Upgrading-from-Remix). Otherwise, please follow the quick start guide below.
+- **Node.js**: `>=20.19 <22 || >=22.12`
+- **Shopify CLI**: Latest version
+- **Docker** (optional, for containerized development)
+- **MySQL** (for production database)
 
-## Quick start
+## 🛠️ Installation
 
-### Prerequisites
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd shopify-app-template-react-router
+   ```
 
-Before you begin, you'll need to [download and install the Shopify CLI](https://shopify.dev/docs/apps/tools/cli/getting-started) if you haven't already.
-
-### Setup
-
-```shell
-shopify app init --template=https://github.com/Shopify/shopify-app-template-react-router
-```
-
-### Local Development
-
-```shell
-shopify app dev
-```
-
-Press P to open the URL to your app. Once you click install, you can start development.
-
-Local development is powered by [the Shopify CLI](https://shopify.dev/docs/apps/tools/cli). It logs into your account, connects to an app, provides environment variables, updates remote config, creates a tunnel and provides commands to generate extensions.
-
-### Authenticating and querying data
-
-To authenticate and query data you can use the `shopify` const that is exported from `/app/shopify.server.js`:
-
-```js
-export async function loader({ request }) {
-  const { admin } = await shopify.authenticate.admin(request);
-
-  const response = await admin.graphql(`
-    {
-      products(first: 25) {
-        nodes {
-          title
-          description
-        }
-      }
-    }`);
-
-  const {
-    data: {
-      products: { nodes },
-    },
-  } = await response.json();
-
-  return nodes;
-}
-```
-
-This template comes pre-configured with examples of:
-
-1. Setting up your Shopify app in [/app/shopify.server.ts](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/shopify.server.ts)
-2. Querying data using Graphql. Please see: [/app/routes/app.\_index.tsx](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/app._index.tsx).
-3. Responding to webhooks. Please see [/app/routes/webhooks.tsx](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/webhooks.app.uninstalled.tsx).
-
-Please read the [documentation for @shopify/shopify-app-react-router](https://shopify.dev/docs/api/shopify-app-react-router) to see what other API's are available.
-
-## Shopify Dev MCP
-
-This template is configured with the Shopify Dev MCP. This instructs [Cursor](https://cursor.com/), [GitHub Copilot](https://github.com/features/copilot) and [Claude Code](https://claude.com/product/claude-code) and [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) to use the Shopify Dev MCP.
-
-For more information on the Shopify Dev MCP please read [the documentation](https://shopify.dev/docs/apps/build/devmcp).
-
-## Deployment
-
-### Application Storage
-
-This template uses [Prisma](https://www.prisma.io/) to store session data, using **MySQL** as the database.
-The database is defined as a Prisma schema in `prisma/schema.prisma`.
-
-#### Local Development Setup
-
-To start the application locally, you'll need Docker and Docker Compose installed.
-
-1. **Install dependencies:**
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Start MySQL database:**
+3. **Set up environment variables**
    ```bash
-   docker-compose up -d db
+   npm run env
    ```
 
-   This starts a MySQL container with the following credentials (configured in `docker-compose.yml`):
-   - Database: `docker`
-   - User: `docker`
-   - Password: `docker`
-   - Port: `3306`
-
-3. **Setup database schema:**
+4. **Initialize database**
    ```bash
+   # Start MySQL with Docker (optional)
+   docker-compose up -d db
+
+   # Run Prisma setup
    npm run setup
    ```
 
-4. **Start development server:**
-   ```bash
-   npm run dev
-   ```
-The database that works best for you depends on the data your app needs and how it is queried.
-Here’s a short list of databases providers that provide a free tier to get started:
+## 🏃 Development
 
-| Database   | Type             | Hosters                                                                                                                                                                                                                                    |
-| ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| MySQL      | SQL              | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-mysql), [Planet Scale](https://planetscale.com/), [Amazon Aurora](https://aws.amazon.com/rds/aurora/), [Google Cloud SQL](https://cloud.google.com/sql/docs/mysql) |
-| PostgreSQL | SQL              | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-postgresql), [Amazon Aurora](https://aws.amazon.com/rds/aurora/), [Google Cloud SQL](https://cloud.google.com/sql/docs/postgres)                                   |
-| Redis      | Key-value        | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-redis), [Amazon MemoryDB](https://aws.amazon.com/memorydb/)                                                                                                        |
-| MongoDB    | NoSQL / Document | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-mongodb), [MongoDB Atlas](https://www.mongodb.com/atlas/database)                                                                                                  |
+### Start Development Server
 
-To use one of these, you can use a different [datasource provider](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#datasource) in your `schema.prisma` file, or a different [SessionStorage adapter package](https://github.com/Shopify/shopify-api-js/blob/main/packages/shopify-api/docs/guides/session-storage.md).
-
-### Build
-
-Build the app by running the command below with the package manager of your choice:
-
-Using yarn:
-
-```shell
-yarn build
+```bash
+npm run dev
 ```
 
-Using npm:
+This will:
+- Start the Vite development server
+- Launch the Shopify app tunnel
+- Open your app in the browser
 
-```shell
+### Build for Production
+
+```bash
 npm run build
 ```
 
-Using pnpm:
+### Start Production Server
 
-```shell
-pnpm run build
+```bash
+npm run start
 ```
 
-## Hosting
+## 📚 Available Scripts
 
-When you're ready to set up your app in production, you can follow [our deployment documentation](https://shopify.dev/docs/apps/launch/deployment) to host it externally. From there, you have a few options:
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server with Shopify CLI |
+| `npm run build` | Build the app for production |
+| `npm run start` | Start production server |
+| `npm run setup` | Generate Prisma Client and run migrations |
+| `npm run format` | Format code with Prettier |
+| `npm run format:check` | Check code formatting |
+| `npm run typecheck` | Run TypeScript type checking |
+| `npm run lint` | Run ESLint |
+| `npm run prisma <command>` | Run Prisma CLI commands |
+| `npm run graphql-codegen` | Generate TypeScript types from GraphQL |
+| `npm run docker-start` | Start app in Docker container |
 
-- [Google Cloud Run](https://shopify.dev/docs/apps/launch/deployment/deploy-to-google-cloud-run): This tutorial is written specifically for this example repo, and is compatible with the extended steps included in the subsequent [**Build your app**](tutorial) in the **Getting started** docs. It is the most detailed tutorial for taking a React Router-based Shopify app and deploying it to production. It includes configuring permissions and secrets, setting up a production database, and even hosting your apps behind a load balancer across multiple regions.
-- [Fly.io](https://fly.io/docs/js/shopify/): Leverages the Fly.io CLI to quickly launch Shopify apps to a single machine.
-- [Render](https://render.com/docs/deploy-shopify-app): This tutorial guides you through using Docker to deploy and install apps on a Dev store.
-- [Manual deployment guide](https://shopify.dev/docs/apps/launch/deployment/deploy-to-hosting-service): This resource provides general guidance on the requirements of deployment including environment variables, secrets, and persistent data.
-
-When you reach the step for [setting up environment variables](https://shopify.dev/docs/apps/deployment/web#set-env-vars), you also need to set the variable `NODE_ENV=production`.
-
-## Gotchas / Troubleshooting
-
-### Database tables don't exist
-
-If you get an error like:
+## 🏗️ Project Structure
 
 ```
-The table `main.Session` does not exist in the current database.
+├── app/
+│   ├── routes/           # File-based routes
+│   │   ├── app._index.tsx           # Main app page (/app)
+│   │   ├── app.additional.tsx       # Additional pages
+│   │   ├── webhooks.*.tsx           # Webhook handlers
+│   │   └── auth.$.tsx               # Authentication routes
+│   ├── shopify.server.ts  # Shopify app configuration
+│   ├── db.server.ts       # Prisma client instance
+│   └── root.tsx           # Root layout component
+├── prisma/
+│   └── schema.prisma      # Database schema
+├── extensions/            # Shopify app extensions
+├── public/                # Static assets
+└── shopify.app.toml       # Shopify app configuration
 ```
 
-Create the database for Prisma. Run the `setup` script in `package.json` using `npm`, `yarn` or `pnpm`.
+## 🔐 Authentication
 
-### Navigating/redirecting breaks an embedded app
+### Server-side Authentication
 
-Embedded apps must maintain the user session, which can be tricky inside an iFrame. To avoid issues:
+```typescript
+import { authenticate } from "../shopify.server";
 
-1. Use `Link` from `react-router` or `@shopify/polaris`. Do not use `<a>`.
-2. Use `redirect` returned from `authenticate.admin`. Do not use `redirect` from `react-router`
-3. Use `useSubmit` from `react-router`.
-
-This only applies if your app is embedded, which it will be by default.
-
-### Webhooks: shop-specific webhook subscriptions aren't updated
-
-If you are registering webhooks in the `afterAuth` hook, using `shopify.registerWebhooks`, you may find that your subscriptions aren't being updated.
-
-Instead of using the `afterAuth` hook declare app-specific webhooks in the `shopify.app.toml` file. This approach is easier since Shopify will automatically sync changes every time you run `deploy` (e.g: `npm run deploy`). Please read these guides to understand more:
-
-1. [app-specific vs shop-specific webhooks](https://shopify.dev/docs/apps/build/webhooks/subscribe#app-specific-subscriptions)
-2. [Create a subscription tutorial](https://shopify.dev/docs/apps/build/webhooks/subscribe/get-started?deliveryMethod=https)
-
-If you do need shop-specific webhooks, keep in mind that the package calls `afterAuth` in 2 scenarios:
-
-- After installing the app
-- When an access token expires
-
-During normal development, the app won't need to re-authenticate most of the time, so shop-specific subscriptions aren't updated. To force your app to update the subscriptions, uninstall and reinstall the app. Revisiting the app will call the `afterAuth` hook.
-
-### Webhooks: Admin created webhook failing HMAC validation
-
-Webhooks subscriptions created in the [Shopify admin](https://help.shopify.com/en/manual/orders/notifications/webhooks) will fail HMAC validation. This is because the webhook payload is not signed with your app's secret key.
-
-The recommended solution is to use [app-specific webhooks](https://shopify.dev/docs/apps/build/webhooks/subscribe#app-specific-subscriptions) defined in your toml file instead. Test your webhooks by triggering events manually in the Shopify admin(e.g. Updating the product title to trigger a `PRODUCTS_UPDATE`).
-
-### Webhooks: Admin object undefined on webhook events triggered by the CLI
-
-When you trigger a webhook event using the Shopify CLI, the `admin` object will be `undefined`. This is because the CLI triggers an event with a valid, but non-existent, shop. The `admin` object is only available when the webhook is triggered by a shop that has installed the app. This is expected.
-
-Webhooks triggered by the CLI are intended for initial experimentation testing of your webhook configuration. For more information on how to test your webhooks, see the [Shopify CLI documentation](https://shopify.dev/docs/apps/tools/cli/commands#webhook-trigger).
-
-### Incorrect GraphQL Hints
-
-By default the [graphql.vscode-graphql](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql) extension for will assume that GraphQL queries or mutations are for the [Shopify Admin API](https://shopify.dev/docs/api/admin). This is a sensible default, but it may not be true if:
-
-1. You use another Shopify API such as the storefront API.
-2. You use a third party GraphQL API.
-
-If so, please update [.graphqlrc.ts](https://github.com/Shopify/shopify-app-template-react-router/blob/main/.graphqlrc.ts).
-
-### Using Defer & await for streaming responses
-
-By default the CLI uses a cloudflare tunnel. Unfortunately cloudflare tunnels wait for the Response stream to finish, then sends one chunk. This will not affect production.
-
-To test [streaming using await](https://reactrouter.com/api/components/Await#await) during local development we recommend [localhost based development](https://shopify.dev/docs/apps/build/cli-for-apps/networking-options#localhost-based-development).
-
-### "nbf" claim timestamp check failed
-
-This is because a JWT token is expired. If you are consistently getting this error, it could be that the clock on your machine is not in sync with the server. To fix this ensure you have enabled "Set time and date automatically" in the "Date and Time" settings on your computer.
-
-### Using MongoDB and Prisma
-
-If you choose to use MongoDB with Prisma, there are some gotchas in Prisma's MongoDB support to be aware of. Please see the [Prisma SessionStorage README](https://www.npmjs.com/package/@shopify/shopify-app-session-storage-prisma#mongodb).
-
-### Unable to require(`C:\...\query_engine-windows.dll.node`).
-
-Unable to require(`C:\...\query_engine-windows.dll.node`).
-The Prisma engines do not seem to be compatible with your system.
-
-query_engine-windows.dll.node is not a valid Win32 application.
-
-**Fix:** Set the environment variable:
-
-```shell
-PRISMA_CLIENT_ENGINE_TYPE=binary
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { admin, session } = await authenticate.admin(request);
+  // Use admin.graphql() for API calls
+};
 ```
 
-This forces Prisma to use the binary engine mode, which runs the query engine as a separate process and can work via emulation on Windows ARM64.
+### Webhook Authentication
 
-## Resources
+```typescript
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { shop, session, topic } = await authenticate.webhook(request);
+  // Handle webhook
+};
+```
 
-React Router:
+## 🌐 GraphQL API Usage
 
-- [React Router docs](https://reactrouter.com/home)
+```typescript
+const { admin } = await authenticate.admin(request);
+const response = await admin.graphql(`
+  query {
+    products(first: 25) {
+      nodes {
+        id
+        title
+      }
+    }
+  }
+`);
+const json = await response.json();
+```
 
-Shopify:
+## 🗄️ Database Configuration
 
-- [Intro to Shopify apps](https://shopify.dev/docs/apps/getting-started)
-- [Shopify App React Router docs](https://shopify.dev/docs/api/shopify-app-react-router)
-- [Shopify CLI](https://shopify.dev/docs/apps/tools/cli)
-- [Shopify App Bridge](https://shopify.dev/docs/api/app-bridge-library).
-- [Polaris Web Components](https://shopify.dev/docs/api/app-home/polaris-web-components).
-- [App extensions](https://shopify.dev/docs/apps/app-extensions/list)
-- [Shopify Functions](https://shopify.dev/docs/api/functions)
+### MySQL (Default)
 
-Internationalization:
+**Connection URL:**
+```bash
+DATABASE_URL="mysql://docker:docker@localhost:3306/docker"
+```
 
-- [Internationalizing your app](https://shopify.dev/docs/apps/best-practices/internationalization/getting-started)
+**Start MySQL with Docker:**
+```bash
+docker-compose up -d db
+```
+
+**To switch databases:**
+
+1. Update `datasource db` provider in `prisma/schema.prisma`
+2. Update `DATABASE_URL` in `.env`
+3. Run `npm run setup`
+
+## 🐳 Docker Support
+
+Build and run the app in a Docker container:
+
+```bash
+# Build the image
+docker build -t shopify-app .
+
+# Run the container
+docker run -p 8080:8080 shopify-app
+```
+
+Or use the convenience script:
+
+```bash
+npm run docker-start
+```
+
+## 🎨 Navigation Patterns
+
+For embedded apps, use these navigation methods:
+
+- **Link component** from `react-router` or `@shopify/polaris` - NOT `<a>` tags
+- **redirect** from `authenticate.admin` - NOT `redirect` from react-router
+- **useSubmit** from `react-router` for form submissions
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `SHOPIFY_API_KEY` | API key from app settings |
+| `SHOPIFY_API_SECRET` | API secret |
+| `SHOPIFY_APP_URL` | App URL |
+| `SCOPES` | Comma-separated list of required scopes |
+| `DATABASE_URL` | Database connection string |
+| `SHOP_CUSTOM_DOMAIN` | Optional custom shop domain |
+
+## 📖 Additional Resources
+
+- [Shopify App Documentation](https://shopify.dev/docs/apps)
+- [React Router Documentation](https://reactrouter.com/)
+- [Polaris Design System](https://polaris.shopify.com/)
+- [Prisma Documentation](https://www.prisma.io/docs)
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
