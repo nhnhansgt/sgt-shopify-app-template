@@ -1,0 +1,215 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a Shopify app template built with React Router (forked from the Remix app template). It uses Polaris web components for the UI, Prisma for session storage, and the Shopify Admin GraphQL API for data operations.
+
+## Development Commands
+
+### Start Development Server
+
+```bash
+npm run dev
+# or
+shopify app dev
+```
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+### Database Setup
+
+```bash
+npm run setup
+# Runs: prisma generate && prisma migrate deploy
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+### Type Checking
+
+```bash
+npm run typecheck
+# Runs: react-router typegen && tsc --noEmit
+```
+
+### Prisma Commands
+
+```bash
+npm run prisma <command>
+# Examples:
+npm run prisma generate        # Generate Prisma Client
+npm run prisma migrate dev     # Create and apply migrations
+npm run prisma migrate reset   # Reset database
+npm run prisma studio          # Open Prisma Studio
+```
+
+### Shopify CLI Commands
+
+```bash
+npm run generate           # Generate extensions/resources
+npm run deploy            # Deploy app
+npm run env               # Manage environment variables
+npm run config:link       # Link to existing app config
+npm run config:use        # Switch app configurations
+```
+
+## Architecture
+
+### Directory Structure
+
+- **app/routes** - File-based routing using React Router's flat routes
+- **app/shopify.server.ts** - Shopify app configuration and authentication
+- **app/db.server.ts** - Prisma client instance
+- **prisma/schema.prisma** - Database schema (default: SQLite)
+- **extensions/** - Shopify app extensions (UI extensions, Functions, etc.)
+
+### Routing Pattern
+
+Routes use React Router's file-based naming:
+
+- `app/routes/app._index.tsx` → `/app` (main app page)
+- `app/routes/app.additional.tsx` → `/app/additional`
+- `app/routes/webhooks.app.uninstalled.tsx` → Webhook handler
+- `app/routes/auth.$.tsx` → Auth route (catch-all)
+
+### Authentication Flow
+
+**Server-side:**
+
+```typescript
+import { authenticate } from "../shopify.server";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { admin, session } = await authenticate.admin(request);
+  // Use admin.graphql() for API calls
+};
+```
+
+**Webhook authentication:**
+
+```typescript
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { shop, session, topic } = await authenticate.webhook(request);
+  // Handle webhook
+};
+```
+
+### GraphQL API Usage
+
+```typescript
+const { admin } = await authenticate.admin(request);
+const response = await admin.graphql(`
+  query {
+    products(first: 25) {
+      nodes {
+        id
+        title
+      }
+    }
+  }
+`);
+const json = await response.json();
+```
+
+### Session Management
+
+Uses Prisma with `@shopify/shopify-app-session-storage-prisma`. Session data is stored in the `Session` model defined in `prisma/schema.prisma`.
+
+## Shopify Dev MCP Integration
+
+This project includes the Shopify Dev MCP server configuration in `.mcp.json`. It provides:
+
+- GraphQL schema introspection
+- Documentation search from shopify.dev
+- Component validation for Polaris components
+
+## Important Patterns
+
+### Embedded App Navigation
+
+For embedded apps (default), use these navigation methods:
+
+- `Link` from `react-router` or `@shopify/polaris` - NOT `<a>` tags
+- `redirect` returned from `authenticate.admin` - NOT `redirect` from react-router
+- `useSubmit` from `react-router` for form submissions
+
+### Error Boundaries
+
+All routes in `/app` should include:
+
+```typescript
+import { boundary } from "@shopify/shopify-app-react-router/server";
+
+export function ErrorBoundary() {
+  return boundary.error(useRouteError());
+}
+
+export const headers: HeadersFunction = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};
+```
+
+### Webhook Handlers
+
+Webhooks are defined in `shopify.app.toml` and handled in `app/routes/webhooks.*.tsx`:
+
+```typescript
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { shop, session, topic } = await authenticate.webhook(request);
+  // Process webhook - check if session exists before using
+  if (session) {
+    await db.session.deleteMany({ where: { shop } });
+  }
+  return new Response();
+};
+```
+
+## Environment Variables
+
+Key environment variables (managed by Shopify CLI):
+
+- `SHOPIFY_API_KEY` - API key from app settings
+- `SHOPIFY_API_SECRET` - API secret
+- `SHOPIFY_APP_URL` - App URL
+- `SCOPES` - Comma-separated list of required scopes
+- `SHOP_CUSTOM_DOMAIN` - Optional custom shop domain
+
+## Database
+
+Default: SQLite via Prisma (`file:dev.sqlite`)
+
+To switch databases:
+
+1. Update `datasource db` in `prisma/schema.prisma`
+2. Update `DATABASE_URL` environment variable
+3. Run `npm run setup`
+
+## TypeScript Configuration
+
+- Strict mode enabled
+- Path aliases configured via `vite-tsconfig-paths`
+- Types generated from GraphQL schema in `app/types/`
+
+## ESLint Configuration
+
+Extends:
+
+- React and React Hooks recommended rules
+- TypeScript recommended rules
+- Import rules with TypeScript resolver
+- Accessibility rules (jsx-a11y)
+
+Special rules:
+
+- `shopify` global allowed
+- `variant` prop allowed for Polaris components
