@@ -1,3 +1,8 @@
+-- Migration: Switch from SQLite to MySQL
+-- Date: 2026-03-02
+-- Command: npx prisma db push
+-- Note: Applied via prisma db push due to shadow database permissions
+
 -- CreateTable
 CREATE TABLE "Session" (
     "id" TEXT NOT NULL PRIMARY KEY,
@@ -17,4 +22,4 @@ CREATE TABLE "Session" (
     "emailVerified" BOOLEAN DEFAULT false,
     "refreshToken" TEXT,
     "refreshTokenExpires" DATETIME
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
